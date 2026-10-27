@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Color Theory Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a stepped lab. A sticky step rail on top, one station visible at a time (demo left, theory right), Back / Next at the bottom of each station; stacks to one column on phones. */
+:root{
+  --bg:#f6f4ef; --fg:#1b1a17; --muted:#6b675d; --line:#d9d5cb; --panel:#ffffff; --panel-2:#ece9e1;
+  --accent:#b8432a; --accent-ink:#ffffff;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#17181b; --fg:#ece9e1; --muted:#a09b90; --line:#33353b; --panel:#1f2125; --panel-2:#2a2c31; --accent:#e8785e; --accent-ink:#17181b; color-scheme:dark } }
+:root[data-theme="dark"]{ --bg:#17181b; --fg:#ece9e1; --muted:#a09b90; --line:#33353b; --panel:#1f2125; --panel-2:#2a2c31; --accent:#e8785e; --accent-ink:#17181b; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,3.2vw,2.3rem)}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.hero{padding-block:28px 18px}
+header.hero .wrap{display:grid;gap:12px}
+.hero p.lede{max-width:62ch;font-size:1.05rem;color:var(--muted)}
+.spectrum{height:10px;border-radius:5px;background:linear-gradient(90deg,#3b0066,#0000ff,#00a2ff,#00ff7f,#ccff00,#ffd000,#ff6a00,#d10000,#5a0000)}
+
+nav.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+nav.rail .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:8px;align-items:center}
+nav.rail .wrap::-webkit-scrollbar{display:none}
+nav.rail button{white-space:nowrap;color:var(--muted);font-size:.88rem;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid transparent;background:none;cursor:pointer;font-family:inherit}
+nav.rail button:hover,nav.rail button:focus-visible{color:var(--fg);background:var(--panel-2);outline:none}
+nav.rail button.active{color:var(--accent-ink);background:var(--accent)}
+nav.rail button.done{color:var(--fg)}
+nav.rail button .n{font-family:var(--mono);font-size:.72rem;margin-right:6px;opacity:.75}
+.progress{height:3px;background:var(--panel-2)}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+section.station{padding-block:40px 28px}
+section.station[hidden]{display:none}
+section.station .wrap{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:40px;align-items:start}
+.theory{display:grid;gap:14px;min-width:0}
+.theory p{max-width:60ch}
+.demo{min-width:0;display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.controls{display:grid;gap:10px}
+.ctl{display:grid;grid-template-columns:5.5rem 1fr 4rem;gap:10px;align-items:center;font-size:.9rem}
+.ctl output{font-family:var(--mono);font-size:.82rem;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
+input[type=range].hue-track{appearance:none;-webkit-appearance:none;height:14px;border-radius:7px;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+input[type=range].sat-track,input[type=range].bri-track{appearance:none;-webkit-appearance:none;height:14px;border-radius:7px}
+input[type=range].hue-track::-webkit-slider-thumb,input[type=range].sat-track::-webkit-slider-thumb,input[type=range].bri-track::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #333;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+input[type=range].hue-track::-moz-range-thumb,input[type=range].sat-track::-moz-range-thumb,input[type=range].bri-track::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #333}
+input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px}
+input[type=text]{font-family:var(--mono);font-size:.9rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);min-width:0}
+button,.btn{font:inherit;font-weight:500;font-size:.9rem;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--fg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:disabled{opacity:.4;cursor:default}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.hex{font-family:var(--mono);font-size:.85rem}
+.note{font-size:.88rem;color:var(--muted);max-width:60ch}
+.callout{border-left:3px solid var(--accent);padding-left:14px;color:var(--muted);font-size:.95rem}
+dl.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.92rem;margin:0}
+dl.facts dt{font-family:var(--mono);font-size:.78rem;color:var(--muted);padding-top:2px}
+dl.facts dd{margin:0}
+
+.stepbar{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:18px;margin-top:8px}
+.stepbar .pos{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+
+/* Additive / subtractive */
+.mix-stage{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:14px;overflow:hidden;isolation:isolate}
+.mix-stage.add{background:#000}
+.mix-stage.sub{background:#fff}
+.beam{position:absolute;width:52%;aspect-ratio:1;border-radius:50%}
+.add .beam{mix-blend-mode:screen}
+.sub .beam{mix-blend-mode:multiply}
+.beam.r{left:8%;top:6%} .beam.g{right:8%;top:6%} .beam.b{left:28%;bottom:4%}
+.legend{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+
+/* Wheels */
+.wheel-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.wheel-card{display:grid;gap:8px;justify-items:center;text-align:center}
+.wheel{width:100%;max-width:220px;aspect-ratio:1;border-radius:50%;border:1px solid var(--line);position:relative}
+.wheel.ryb{background:conic-gradient(from -90deg,#e4201b,#f05a0d,#f9a400,#f7d400,#9bc300,#009b48,#0069a8,#3b2a8c,#6a1b7d,#a8166a,#e4201b)}
+.wheel.rgb{background:conic-gradient(from -90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)}
+.wheel.cmy{background:conic-gradient(from -90deg,#00aeef,#2e3192,#ec008c,#ed1c24,#fff200,#00a651,#00aeef)}
+.wheel::after{content:"";position:absolute;inset:34%;border-radius:50%;background:var(--panel);border:1px solid var(--line)}
+
+/* HSB station */
+.hsb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.hsb-cone{width:100%;max-width:260px;aspect-ratio:1;border-radius:50%;margin:0 auto;position:relative;background:conic-gradient(from -90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.hsb-cone::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,0) 72%)}
+.hsb-cone::after{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,var(--dim,0))}
+.hsb-cone .pin{position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.5);transform:translate(-50%,-50%)}
+.hsb-main{height:150px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:end start;padding:10px;font-family:var(--mono);font-size:.78rem}
+.ramps{display:grid;gap:10px}
+.ramp{display:grid;gap:4px}
+.ramp .lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.ramp .cells{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.ramp .cells div{position:relative}
+.ramp .cells div.on::after{content:"";position:absolute;inset:4px;border:2px solid #fff;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+
+/* Harmony */
+.harm-wheel{position:relative;width:100%;max-width:260px;aspect-ratio:1;border-radius:50%;margin:0 auto;background:conic-gradient(from -90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)}
+.harm-wheel::after{content:"";position:absolute;inset:30%;border-radius:50%;background:var(--panel);border:1px solid var(--line)}
+.dot{position:absolute;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.45);transform:translate(-50%,-50%);z-index:1}
+.harm-strip{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;height:72px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.harm-strip div{display:grid;place-items:end start;padding:6px;font-family:var(--mono);font-size:.68rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+
+/* Models */
+.model-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.big-swatch{height:120px;border-radius:12px;border:1px solid var(--line)}
+.readout{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-family:var(--mono);font-size:.82rem}
+.readout b{color:var(--muted);font-weight:500}
+
+/* Solids */
+.solid-wrap{position:relative}
+#solid{display:block;width:100%;height:auto;aspect-ratio:4/3;max-width:100%;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);cursor:grab;touch-action:none}
+#solid:active{cursor:grabbing}
+.solid-cap{position:absolute;left:10px;top:8px;font-family:var(--mono);font-size:.72rem;color:var(--muted);pointer-events:none}
+
+/* Perception */
+.contrast-stage{display:grid;grid-template-columns:1fr 1fr;height:170px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.contrast-stage div{display:grid;place-items:center}
+.contrast-stage span{width:64px;height:64px;border-radius:8px;background:#8a8a8a}
+.contrast-stage.bridge span{width:100%;height:64px;border-radius:0}
+.munker{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.munker-cell{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background-size:100% 16px;background-image:repeating-linear-gradient(0deg,var(--s1) 0 8px,transparent 8px 16px)}
+.munker-cell::before{content:"";display:block;width:60%;height:60%;margin:20%;background:var(--bar);border-radius:50%;mask:repeating-linear-gradient(0deg,transparent 0 8px,#000 8px 16px);-webkit-mask:repeating-linear-gradient(0deg,transparent 0 8px,#000 8px 16px)}
+.munker-cell.plain::before{mask:none;-webkit-mask:none}
+
+/* Dress */
+.dress-stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dress-frame{border-radius:12px;padding:10px;display:grid;gap:6px;justify-items:center;background:var(--panel-2)}
+.dress-frame svg{width:100%;max-width:150px;height:auto}
+.dress-frame .cap{font-family:var(--mono);font-size:.72rem;color:var(--muted);text-align:center}
+.illum{height:34px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(90deg,#9fc6ff,#e8eef4 50%,#ffc46b)}
+.poll{display:grid;gap:10px}
+.poll .bars{display:grid;gap:6px}
+.poll .bar{display:grid;grid-template-columns:7rem 1fr 3.5rem;gap:8px;align-items:center;font-size:.9rem}
+.poll .bar i{display:block;height:14px;border-radius:7px;background:var(--panel-2);overflow:hidden}
+.poll .bar i b{display:block;height:100%;width:0;transition:width .4s}
+.poll .bar.wg i b{background:#c9a24a}
+.poll .bar.bb i b{background:#4b5f9c}
+.poll .bar output{font-family:var(--mono);font-size:.8rem;text-align:right;font-variant-numeric:tabular-nums}
+
+footer{padding-block:28px 40px;color:var(--muted);font-size:.85rem}
+footer .wrap{display:grid;gap:8px}
+
+@media (max-width:760px){
+  section.station .wrap{grid-template-columns:1fr}
+  .wheel-row,.model-grid,.hsb-grid{grid-template-columns:1fr}
+  .dress-stage{grid-template-columns:1fr 1fr}
+  .ctl{grid-template-columns:4.5rem 1fr 3.5rem}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+<style>img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">An interactive lab · 8 steps</p>
+    <h1>Color Theory Lab</h1>
+    <p class="lede">Work through the stations in order, or jump to any one from the rail. Each step pairs a hands-on demo with the theory behind it.</p>
+    <div class="spectrum" aria-hidden="true"></div>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Steps">
+  <div class="wrap" id="rail"></div>
+  <div class="progress"><i id="prog"></i></div>
+</nav>
+
+<!-- 1 ADDITIVE -->
+<section class="station" id="additive" data-label="Additive">
+  <div class="wrap">
+    <div class="demo">
+      <div class="mix-stage add" aria-label="Three colored light beams overlapping on black">
+        <div class="beam r" id="beamR"></div><div class="beam g" id="beamG"></div><div class="beam b" id="beamB"></div>
+        <div class="legend" style="color:#ddd">screen blend · R+G+B = white</div>
+      </div>
+      <div class="panel controls">
+        <label class="ctl"><span>Red</span><input type="range" id="addR" min="0" max="255" value="255"><output id="addRo">255</output></label>
+        <label class="ctl"><span>Green</span><input type="range" id="addG" min="0" max="255" value="255"><output id="addGo">255</output></label>
+        <label class="ctl"><span>Blue</span><input type="range" id="addB" min="0" max="255" value="255"><output id="addBo">255</output></label>
+        <div class="seg">
+          <button type="button" data-add="255,255,255">White</button>
+          <button type="button" data-add="255,255,0">R+G</button>
+          <button type="button" data-add="0,255,255">G+B</button>
+          <button type="button" data-add="255,0,255">R+B</button>
+          <button type="button" data-add="120,60,200">Dim</button>
+        </div>
+        <p class="note">Center overlap: <span class="hex" id="addHex">#ffffff</span>. Every pixel on the screen you are reading this on is three tiny lamps doing exactly this.</p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 1 · Light</p>
+      <h2>Additive color: mixing light</h2>
+      <p>Start with darkness. Each light source you switch on adds energy to the eye. Red, green and blue are the additive primaries because they line up with the three cone types in the human retina (long, medium and short wavelength). Red light plus green light reads as yellow, not because yellow photons appear, but because the L and M cones fire in the same ratio they would under real yellow light.</p>
+      <p>Mix all three at full strength and you get white. Mix none and you get black. The secondaries of additive mixing (cyan, magenta, yellow) are the primaries of the next station, which is not a coincidence.</p>
+      <div class="callout">Where it lives: screens, stage lighting, projectors, cameras, the sRGB and Display P3 color spaces.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 SUBTRACTIVE -->
+<section class="station" id="subtractive" data-label="Subtractive" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="mix-stage sub" aria-label="Three ink filters overlapping on white">
+        <div class="beam r" id="inkC"></div><div class="beam g" id="inkM"></div><div class="beam b" id="inkY"></div>
+        <div class="legend" style="color:#444">multiply blend · C+M+Y = near black</div>
+      </div>
+      <div class="panel controls">
+        <label class="ctl"><span>Cyan</span><input type="range" id="subC" min="0" max="100" value="100"><output id="subCo">100%</output></label>
+        <label class="ctl"><span>Magenta</span><input type="range" id="subM" min="0" max="100" value="100"><output id="subMo">100%</output></label>
+        <label class="ctl"><span>Yellow</span><input type="range" id="subY" min="0" max="100" value="100"><output id="subYo">100%</output></label>
+        <div class="seg">
+          <button type="button" data-sub="100,100,100">All inks</button>
+          <button type="button" data-sub="100,100,0">C+M</button>
+          <button type="button" data-sub="0,100,100">M+Y</button>
+          <button type="button" data-sub="100,0,100">C+Y</button>
+          <button type="button" data-sub="40,20,70">Tint</button>
+        </div>
+        <p class="note">Center overlap: <span class="hex" id="subHex">#000000</span>. Printers add a fourth ink, K (black), because real C+M+Y pigments only reach a muddy dark brown.</p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 2 · Pigment</p>
+      <h2>Subtractive color: mixing paint and ink</h2>
+      <p>Start with white light bouncing off white paper. Each pigment you lay down absorbs part of the spectrum and lets the rest reflect back. Cyan ink absorbs red, magenta absorbs green, yellow absorbs blue. Stack cyan and yellow and only green survives. Stack all three and almost nothing survives: black.</p>
+      <p>Painters learned this long before anyone measured a wavelength. The classroom RYB primaries (red, yellow, blue) are a historical approximation of the same idea; CMY is the version that gives a wider gamut and matches how the eye actually works.</p>
+      <div class="callout">Where it lives: printing (CMYK), paint, dyes, filters, watercolor. Also why mixing every paint on the palette gives you mud.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 WHEELS -->
+<section class="station" id="wheels" data-label="Wheels" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel">
+        <div class="wheel-row">
+          <div class="wheel-card"><div class="wheel ryb" aria-label="Traditional RYB color wheel"></div><h3>RYB (Itten, 1961)</h3><p class="note">Painter's wheel. Red, yellow, blue primaries; orange, green, purple secondaries. Complement of red is green.</p></div>
+          <div class="wheel-card"><div class="wheel rgb" aria-label="RGB color wheel"></div><h3>RGB / HSV</h3><p class="note">Screen wheel. Hue is an angle 0–360°. Complement of red is cyan. Used by every color picker in software.</p></div>
+          <div class="wheel-card"><div class="wheel cmy" aria-label="CMY color wheel"></div><h3>CMY</h3><p class="note">Same hues as RGB, rotated 180°. Print's primaries sit where the screen's secondaries are.</p></div>
+          <div class="wheel-card"><div class="wheel" id="munsellWheel" aria-label="Perceptually uniform hue wheel"></div><h3>Perceptual (OKLCH)</h3><p class="note">Hues spaced so equal steps look equal. Notice how little room pure yellow gets compared with the blues.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 3 · Maps</p>
+      <h2>Four color wheels, four different truths</h2>
+      <p>A color wheel is a map, and every map chooses what to distort. The painter's RYB wheel from Goethe and Itten puts the secondaries where pigments actually land. The RGB wheel is a mathematical ring of hue angles, perfectly even in numbers and uneven to the eye. The CMY wheel is the RGB wheel turned by 180°.</p>
+      <p>Modern perceptual spaces such as CIELAB, CIECAM and OKLCH rebuild the wheel around how far apart colors <em>look</em>. On that wheel yellow is a narrow sliver and blue takes up a wide arc, which is why designers who pick hues by RGB angle end up with palettes that feel lopsided.</p>
+      <dl class="facts">
+        <dt>1666</dt><dd>Newton bends the spectrum into a circle.</dd>
+        <dt>1810</dt><dd>Goethe argues for color as perception, not just physics.</dd>
+        <dt>1905</dt><dd>Munsell builds the first perceptually spaced hue, value, chroma solid.</dd>
+        <dt>1931</dt><dd>CIE defines XYZ, the measurement standard still in use.</dd>
+        <dt>1976</dt><dd>CIELAB arrives; 2020 brings OKLab for screens.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- 4 HUE / SATURATION / BRIGHTNESS -->
+<section class="station" id="hsb" data-label="Hue · Sat · Bright" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel" style="display:grid;gap:16px">
+        <div class="hsb-grid">
+          <div class="hsb-cone" id="hsbCone" aria-label="Hue and saturation disc; brightness dims the whole disc"><div class="pin" id="hsbPin"></div></div>
+          <div style="display:grid;gap:10px">
+            <div class="hsb-main" id="hsbMain"></div>
+            <div class="controls">
+              <label class="ctl"><span>Hue</span><input type="range" class="hue-track" id="hH" min="0" max="360" value="200"><output id="hHo">200°</output></label>
+              <label class="ctl"><span>Saturation</span><input type="range" class="sat-track" id="hS" min="0" max="100" value="80"><output id="hSo">80%</output></label>
+              <label class="ctl"><span>Brightness</span><input type="range" class="bri-track" id="hB" min="0" max="100" value="90"><output id="hBo">90%</output></label>
+            </div>
+            <div class="seg">
+              <button type="button" data-hsb="0,100,100">Pure red</button>
+              <button type="button" data-hsb="200,80,90">Sky</button>
+              <button type="button" data-hsb="30,25,95">Beige</button>
+              <button type="button" data-hsb="280,60,35">Plum</button>
+              <button type="button" data-hsb="0,0,50">Mid grey</button>
+            </div>
+          </div>
+        </div>
+        <div class="ramps">
+          <div class="ramp"><div class="lbl"><span>Hue · 0° → 360°</span><span>same S and B</span></div><div class="cells" id="rampH"></div></div>
+          <div class="ramp"><div class="lbl"><span>Saturation · 0% → 100%</span><span>same H and B</span></div><div class="cells" id="rampS"></div></div>
+          <div class="ramp"><div class="lbl"><span>Brightness · 0% → 100%</span><span>same H and S</span></div><div class="cells" id="rampB"></div></div>
+          <div class="ramp"><div class="lbl"><span>Tint → pure → shade</span><span>painter's terms</span></div><div class="cells" id="rampT"></div></div>
+        </div>
+        <p class="note" id="hsbNote"></p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 4 · Three dimensions</p>
+      <h2>Hue, saturation, brightness</h2>
+      <p>Mixing primaries tells you how colors are made; it says nothing about how to describe one. For that, every modern system uses three dimensions, first laid out by Albert Munsell in 1905 as hue, value and chroma.</p>
+      <p><strong>Hue</strong> is the color's name on the wheel: red, orange, teal. In HSB it is an angle from 0° to 360°. <strong>Saturation</strong> (Munsell's chroma) is how much of that hue is present versus grey. At 0% every hue collapses to the same neutral. <strong>Brightness</strong> (value, or lightness) is how much light the color sends back. Drop it to 0% and every hue collapses to black.</p>
+      <p>The disc on the left is a slice of the HSB cone: hue runs around it, saturation from the centre outward, and the brightness slider dims the whole slice. Painters describe the same moves as <strong>tints</strong> (adding white), <strong>shades</strong> (adding black) and <strong>tones</strong> (adding grey).</p>
+      <div class="callout">Why it matters: a palette with varied brightness and one or two hues almost always beats one with many hues at the same brightness. Brightness carries hierarchy; hue carries mood. Squint at any good poster and the hues vanish while the design still reads.</div>
+      <dl class="facts">
+        <dt>HSB = HSV</dt><dd>Same model, two names (Photoshop says B, most code says V).</dd>
+        <dt>HSL</dt><dd>Lightness instead of brightness: 100% is white, not the pure hue.</dd>
+        <dt>OKLCH</dt><dd>The perceptual version: L, chroma, hue. Equal L really looks equally bright.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- 5 HARMONY -->
+<section class="station" id="harmony" data-label="Harmony" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel" style="display:grid;gap:14px">
+        <div class="harm-wheel" id="harmWheel" aria-label="Hue wheel with harmony markers"></div>
+        <div class="harm-strip" id="harmStrip"></div>
+        <div class="controls">
+          <label class="ctl"><span>Hue</span><input type="range" id="harmHue" min="0" max="359" value="18"><output id="harmHueo">18°</output></label>
+          <label class="ctl"><span>Saturation</span><input type="range" id="harmSat" min="10" max="100" value="78"><output id="harmSato">78%</output></label>
+          <label class="ctl"><span>Lightness</span><input type="range" id="harmLig" min="15" max="85" value="50"><output id="harmLigo">50%</output></label>
+          <div class="seg" id="harmSeg">
+            <button type="button" data-h="comp" aria-pressed="true">Complementary</button>
+            <button type="button" data-h="split">Split complementary</button>
+            <button type="button" data-h="analog">Analogous</button>
+            <button type="button" data-h="triad">Triadic</button>
+            <button type="button" data-h="tetrad">Tetradic</button>
+            <button type="button" data-h="mono">Monochromatic</button>
+          </div>
+        </div>
+        <p class="note" id="harmNote"></p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 5 · Relationships</p>
+      <h2>Color harmony</h2>
+      <p>Harmony schemes are rules of thumb for which hues sit well together, expressed as angles on the wheel. Complementary pairs sit opposite each other and produce the strongest contrast; analogous hues sit side by side and read as calm; triads and tetrads balance the wheel geometrically.</p>
+      <p>Treat them as starting points. A working palette usually assigns roles (one dominant, one supporting, one accent) and varies lightness and saturation far more than hue. Most memorable palettes are nearly monochromatic with one deliberate complement.</p>
+      <div class="callout">Try it: set a triad, then drop saturation to 30%. The scheme survives; the garishness goes.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 MODELS -->
+<section class="station" id="models" data-label="Models" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel" style="display:grid;gap:14px">
+        <div class="model-grid">
+          <div style="display:grid;gap:10px">
+            <div class="big-swatch" id="modelSwatch"></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="color" id="modelPick" value="#2f6fb5" aria-label="Pick a color">
+              <input type="text" id="modelHex" value="#2f6fb5" aria-label="Hex value" size="9">
+              <button type="button" id="modelRandom">Random</button>
+            </div>
+          </div>
+          <div class="readout" id="modelReadout"></div>
+        </div>
+        <div class="controls">
+          <label class="ctl"><span>H</span><input type="range" id="mH" min="0" max="360" value="212"><output id="mHo">212°</output></label>
+          <label class="ctl"><span>S</span><input type="range" id="mS" min="0" max="100" value="59"><output id="mSo">59%</output></label>
+          <label class="ctl"><span>L</span><input type="range" id="mL" min="0" max="100" value="45"><output id="mLo">45%</output></label>
+        </div>
+        <p class="note">Sliders are HSL. Everything else is derived from the same sRGB value. The LAB numbers use the D65 white point.</p>
+      </div>
+      <div class="panel" style="display:grid;gap:12px">
+        <h3>Color solids</h3>
+        <div class="seg" id="solidSeg">
+          <button type="button" data-solid="cube" aria-pressed="true">RGB cube</button>
+          <button type="button" data-solid="cyl">HSB cylinder</button>
+          <button type="button" data-solid="cone">HSB cone</button>
+          <button type="button" data-solid="bicone">HSL double cone</button>
+        </div>
+        <div class="solid-wrap">
+          <canvas id="solid" width="800" height="600" aria-label="Rotatable 3D color solid"></canvas>
+          <span class="solid-cap" id="solidCap"></span>
+        </div>
+        <div class="seg">
+          <button type="button" id="solidSpin" aria-pressed="true">Auto-rotate</button>
+          <button type="button" id="solidCut" aria-pressed="false">Cut away front half</button>
+        </div>
+        <p class="note" id="solidNote"></p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 6 · Numbers</p>
+      <h2>Color models: one color, many addresses</h2>
+      <p><strong>RGB</strong> is what the screen does. <strong>HSL/HSV</strong> rearranges the same cube into something humans can steer: pick a hue, then how vivid, then how light. <strong>CMYK</strong> is the printer's ink recipe. <strong>CIE XYZ</strong> is the measurement model everything is calibrated against.</p>
+      <p><strong>CIELAB</strong> and <strong>OKLCH</strong> are perceptual: L is how bright it looks, and a numeric distance between two colors roughly matches how different they look. That is the property you want when generating palettes, checking contrast, or blending gradients without a muddy grey in the middle. CSS now supports <code>oklch()</code> directly.</p>
+      <p><strong>Is HSB a cylinder?</strong> Mathematically, yes: hue is the angle, saturation the radius, brightness the height, and the three are independent, so the model fills a cylinder. But a cylinder is dishonest about what you see. At brightness 0 every point on the bottom disc is black, and at low brightness the saturation axis barely changes anything. So HSB is usually drawn as a cone that narrows to a black point, and HSL, where both ends collapse (to black at L = 0 and white at L = 1), as a double cone. The RGB cube needs no such trick: every corner is a distinct color, black and white sit at opposite corners, and the grey axis is the diagonal between them. Switch the solid above with the current color marked to see how the same color moves between shapes.</p>
+      <div class="callout">Gamut: sRGB covers about 35% of visible colors. Display P3 reaches roughly 45%. Printing reaches less than either, and in a different shape.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 PERCEPTION -->
+<section class="station" id="perception" data-label="Perception" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel" style="display:grid;gap:12px">
+        <h3>Simultaneous contrast</h3>
+        <div class="contrast-stage" id="contrastStage">
+          <div style="background:#2a2a2a"><span></span></div>
+          <div style="background:#d8d8d8"><span></span></div>
+        </div>
+        <div class="seg"><button type="button" id="bridgeBtn" aria-pressed="false">Connect the two squares</button></div>
+        <p class="note">Both squares are the same grey (#8a8a8a). Your visual system judges each by its surroundings, not by its absolute value.</p>
+      </div>
+      <div class="panel" style="display:grid;place-items:stretch;gap:12px">
+        <h3>Munker–White effect</h3>
+        <div class="munker">
+          <div class="munker-cell" style="--s1:#e2b100;--bar:#c81e5a" aria-label="Magenta circle behind yellow stripes"></div>
+          <div class="munker-cell" style="--s1:#2b59c3;--bar:#c81e5a" aria-label="Magenta circle behind blue stripes"></div>
+        </div>
+        <div class="seg"><button type="button" id="munkerBtn" aria-pressed="false">Remove the stripes</button></div>
+        <p class="note">Both circles are the identical magenta. Thin stripes of a second color pull the perceived hue toward themselves. This same mechanism is at work in The Dress.</p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 7 · The observer</p>
+      <h2>Perception: color happens in the brain</h2>
+      <p>Wavelengths exist in the world; color does not. The retina reports three cone signals, and the brain turns them into an experience of color after comparing them with everything nearby, with its memory of what objects usually look like, and with a guess about the light source.</p>
+      <p>That last step is called <strong>color constancy</strong>. It is why a white page looks white under a yellow bulb and under blue sky, even though the light reaching your eye is completely different. The brain estimates the illuminant and discounts it. Most of the time this is a feature. Occasionally, when the scene gives it too few clues, it becomes a public argument.</p>
+      <dl class="facts">
+        <dt>~8% of men</dt><dd>have some red–green color vision deficiency; about 0.5% of women.</dd>
+        <dt>Tetrachromats</dt><dd>A small number of women carry a fourth cone type.</dd>
+        <dt>Language</dt><dd>Speakers of languages with separate words for light and dark blue discriminate those blues faster.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- 8 THE DRESS -->
+<section class="station" id="dress" data-label="The Dress" hidden>
+  <div class="wrap">
+    <div class="demo">
+      <div class="panel" style="display:grid;gap:14px">
+        <div class="dress-stage">
+          <div class="dress-frame">
+            <svg viewBox="0 0 120 220" aria-label="Simplified dress using the pixel colors from the photograph">
+              <defs><clipPath id="dcA"><path d="M38 8 H82 L86 60 L100 70 L108 210 H12 L20 70 L34 60 Z"/></clipPath></defs>
+              <g clip-path="url(#dcA)">
+                <rect x="0" y="0" width="120" height="220" fill="#7b8dc0" id="photoA"/>
+                <g id="photoB" fill="#5f4f32">
+                  <rect x="0" y="48" width="120" height="22"/><rect x="0" y="98" width="120" height="22"/><rect x="0" y="148" width="120" height="22"/><rect x="0" y="198" width="120" height="22"/>
+                </g>
+              </g>
+            </svg>
+            <p class="cap">Pixels in the photo<br><span class="hex" id="photoHex">#7b8dc0 · #5f4f32</span></p>
+          </div>
+          <div class="dress-frame">
+            <svg viewBox="0 0 120 220" aria-label="The same dress as your brain might reconstruct it">
+              <defs><clipPath id="dcB"><path d="M38 8 H82 L86 60 L100 70 L108 210 H12 L20 70 L34 60 Z"/></clipPath></defs>
+              <g clip-path="url(#dcB)">
+                <rect x="0" y="0" width="120" height="220" id="seenA" fill="#7b8dc0"/>
+                <g id="seenB" fill="#5f4f32">
+                  <rect x="0" y="48" width="120" height="22"/><rect x="0" y="98" width="120" height="22"/><rect x="0" y="148" width="120" height="22"/><rect x="0" y="198" width="120" height="22"/>
+                </g>
+              </g>
+            </svg>
+            <p class="cap">What a brain reports<br><span class="hex" id="seenHex"></span></p>
+          </div>
+        </div>
+        <div class="controls">
+          <p class="eyebrow">Assumed light on the dress</p>
+          <div class="illum" aria-hidden="true"></div>
+          <label class="ctl"><span>Illuminant</span><input type="range" id="illum" min="-100" max="100" value="0"><output id="illumo">neutral</output></label>
+          <div class="seg">
+            <button type="button" data-illum="-100">Blue shadow / daylight</button>
+            <button type="button" data-illum="0">No assumption</button>
+            <button type="button" data-illum="100">Warm indoor light</button>
+          </div>
+          <p class="note" id="dressVerdict"></p>
+        </div>
+      </div>
+      <div class="panel poll">
+        <h3>Which did you see first?</h3>
+        <div class="seg">
+          <button type="button" id="voteWG">White &amp; gold</button>
+          <button type="button" id="voteBB">Blue &amp; black</button>
+          <button type="button" id="voteReset" style="margin-left:auto">Reset</button>
+        </div>
+        <div class="bars">
+          <div class="bar wg"><span>White &amp; gold</span><i><b id="barWG"></b></i><output id="pctWG">—</output></div>
+          <div class="bar bb"><span>Blue &amp; black</span><i><b id="barBB"></b></i><output id="pctBB">—</output></div>
+        </div>
+        <p class="note" id="pollNote">Votes stay on this device. In the first day of the 2015 poll, about 72% of respondents said white and gold.</p>
+      </div>
+    </div>
+    <div class="theory">
+      <p class="eyebrow">Step 8 · Case study, February 2015</p>
+      <h2>The Dress</h2>
+      <p>On 26 February 2015 a Tumblr user posted a photo of a lace dress her friends could not agree on, asking whether it was white and gold or blue and black. Within hours it was the most-viewed post in BuzzFeed's history, split households (Kim Kardashian saw white and gold, Kanye West saw blue and black), and drew a verdict from the Prime Minister of Singapore. The photo had been taken by Cecilia Bleasdale, the bride's mother, on the Scottish island of Colonsay, and the dress was a £50 Roman Originals design.</p>
+      <p>The dress itself is royal blue with black lace. The photo, though, is badly exposed with a washed-out, bluish cast and no clear clue about the light source. Sample the actual pixels and you get a periwinkle (<span class="hex">#7b8dc0</span>) and a muddy brown (<span class="hex">#5f4f32</span>): neither white, gold, blue nor black. Those are the colors in the left frame above.</p>
+      <p>Your brain refuses to leave it at that. It applies color constancy, estimates an illuminant, and subtracts it. If it guesses the dress is standing in blue shadow or daylight, it removes blue, and the periwinkle snaps to white and the brown warms to gold. If it guesses the dress is lit by a warm indoor bulb and over-exposed, it removes yellow and darkens, and you get blue and black. Drag the slider to make either assumption on purpose.</p>
+      <p>Follow-up studies found the split tracks real differences between people: those who spend more waking hours in daylight lean white-and-gold, night owls lean blue-and-black. Most people cannot switch at will, and many never see the other version at all. Same photons, different priors, two sincere answers.</p>
+      <div class="callout">The lesson for designers: you never ship a color. You ship a stimulus, and every viewer finishes it in their own head, under their own lighting, on their own screen.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Demos use CSS blend modes for light and ink mixing, HSB, HSL and CIELAB conversions in plain JavaScript, and a simplified von Kries chromatic-adaptation model for the dress. Numbers in the dress demo are illustrative, not a vision-science simulation.</p>
+    <p>Background on the 2015 event: Wired, "The Science of Why No One Agrees on the Color of This Dress"; The New York Times, "Is That Dress White and Gold or Blue and Black?"; Lafer-Sousa, Hermann &amp; Conway, <em>Current Biology</em> (2015).</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  const hex=(r,g,b)=>'#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+  const hslToRgb=(h,s,l)=>{s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return [f(0)*255,f(8)*255,f(4)*255];};
+  const hsvToRgb=(h,s,v)=>{s/=100;v/=100;const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return [f(5)*255,f(3)*255,f(1)*255];};
+  const rgbToHsl=(r,g,b)=>{r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0;const l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h*=60;}return [h,s*100,l*100];};
+  const hexToRgb=h=>{const m=/^#?([0-9a-f]{6})$/i.exec(h.trim());if(!m)return null;const n=parseInt(m[1],16);return [n>>16&255,n>>8&255,n&255];};
+
+  /* ---------- Steps ---------- */
+  const stations=[...document.querySelectorAll('section.station')];
+  const rail=$('rail');let cur=0;
+  stations.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<span class="n">${i+1}</span>${s.dataset.label}`;b.addEventListener('click',()=>go(i));rail.appendChild(b);
+    const bar=document.createElement('div');bar.className='stepbar';
+    bar.innerHTML=`<button type="button" class="prev">← Back</button><span class="pos">Step ${i+1} of ${stations.length}</span><button type="button" class="next primary">${i===stations.length-1?'Start over':'Next →'}</button>`;
+    bar.querySelector('.prev').disabled=i===0;
+    bar.querySelector('.prev').addEventListener('click',()=>go(i-1));
+    bar.querySelector('.next').addEventListener('click',()=>go(i===stations.length-1?0:i+1));
+    s.querySelector('.wrap').appendChild(bar);});
+  function go(i,noScroll){
+    cur=clamp(i,0,stations.length-1);
+    stations.forEach((s,j)=>{s.hidden=j!==cur});
+    [...rail.children].forEach((b,j)=>{b.classList.toggle('active',j===cur);b.classList.toggle('done',j<cur);if(j===cur)b.scrollIntoView({block:'nearest',inline:'center'});});
+    $('prog').style.width=((cur+1)/stations.length*100)+'%';
+    try{history.replaceState(null,'','#'+stations[cur].id)}catch(e){}
+    if(!noScroll){const top=document.querySelector('nav.rail').getBoundingClientRect().top+window.scrollY;window.scrollTo({top:Math.max(0,top-4),behavior:'smooth'});}
+  }
+  document.addEventListener('keydown',e=>{if(e.target.matches('input,textarea,button'))return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);});
+  const start=stations.findIndex(s=>'#'+s.id===location.hash);
+  go(start>=0?start:0,true);
+
+  /* ---------- Additive ---------- */
+  const addR=$('addR'),addG=$('addG'),addB=$('addB');
+  function renderAdd(){
+    const r=+addR.value,g=+addG.value,b=+addB.value;
+    $('beamR').style.background=`rgb(${r},0,0)`;$('beamG').style.background=`rgb(0,${g},0)`;$('beamB').style.background=`rgb(0,0,${b})`;
+    $('addRo').value=r;$('addGo').value=g;$('addBo').value=b;$('addHex').textContent=hex(r,g,b);
+  }
+  [addR,addG,addB].forEach(i=>i.addEventListener('input',renderAdd));
+  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const [r,g,bl]=b.dataset.add.split(',');addR.value=r;addG.value=g;addB.value=bl;renderAdd();}));
+  renderAdd();
+
+  /* ---------- Subtractive ---------- */
+  const subC=$('subC'),subM=$('subM'),subY=$('subY');
+  function renderSub(){
+    const c=+subC.value/100,m=+subM.value/100,y=+subY.value/100;
+    $('inkC').style.background=`rgb(${255*(1-c)},255,255)`;$('inkM').style.background=`rgb(255,${255*(1-m)},255)`;$('inkY').style.background=`rgb(255,255,${255*(1-y)})`;
+    $('subCo').value=Math.round(c*100)+'%';$('subMo').value=Math.round(m*100)+'%';$('subYo').value=Math.round(y*100)+'%';
+    $('subHex').textContent=hex(255*(1-c),255*(1-m),255*(1-y));
+  }
+  [subC,subM,subY].forEach(i=>i.addEventListener('input',renderSub));
+  document.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>{const [c,m,y]=b.dataset.sub.split(',');subC.value=c;subM.value=m;subY.value=y;renderSub();}));
+  renderSub();
+
+  /* ---------- Perceptual wheel (OKLCH) ---------- */
+  const stops=[];for(let a=0;a<=360;a+=10)stops.push(`oklch(0.72 0.17 ${a}) ${a}deg`);
+  $('munsellWheel').style.background=`conic-gradient(from -90deg,${stops.join(',')})`;
+
+  /* ---------- HSB ---------- */
+  const hH=$('hH'),hS=$('hS'),hB=$('hB');
+  function cells(el,n,fn){el.innerHTML='';for(let i=0;i<n;i++){const d=document.createElement('div');const [c,on]=fn(i/(n-1));d.style.background=c;if(on)d.classList.add('on');el.appendChild(d);}}
+  function renderHsb(){
+    const h=+hH.value,s=+hS.value,b=+hB.value;
+    $('hHo').value=h+'°';$('hSo').value=s+'%';$('hBo').value=b+'%';
+    const [r,g,bl]=hsvToRgb(h,s,b),hx=hex(r,g,bl);
+    $('hsbMain').style.background=hx;$('hsbMain').style.color=b>60&&s<70?'#111':'#fff';$('hsbMain').textContent=`hsb(${h}, ${s}%, ${b}%) · ${hx}`;
+    hS.style.background=`linear-gradient(90deg,${hex(...hsvToRgb(h,0,b))},${hex(...hsvToRgb(h,100,b))})`;
+    hB.style.background=`linear-gradient(90deg,#000,${hex(...hsvToRgb(h,s,100))})`;
+    $('hsbCone').style.setProperty('--dim',(1-b/100).toFixed(3));
+    const rad=(h-90)*Math.PI/180,R=s/100*48;
+    $('hsbPin').style.left=(50+R*Math.cos(rad))+'%';$('hsbPin').style.top=(50+R*Math.sin(rad))+'%';$('hsbPin').style.background=hx;
+    const n=12;
+    cells($('rampH'),n,t=>[hex(...hsvToRgb(t*360,s,b)),Math.round(h/360*(n-1))===Math.round(t*(n-1))]);
+    cells($('rampS'),n,t=>[hex(...hsvToRgb(h,t*100,b)),Math.round(s/100*(n-1))===Math.round(t*(n-1))]);
+    cells($('rampB'),n,t=>[hex(...hsvToRgb(h,s,t*100)),Math.round(b/100*(n-1))===Math.round(t*(n-1))]);
+    cells($('rampT'),n,t=>{const [pr,pg,pb]=hsvToRgb(h,100,100);const mix=t<.5?1-t*2:0,dark=t>.5?(t-.5)*2:0;return [hex(pr+(255-pr)*mix-pr*dark,pg+(255-pg)*mix-pg*dark,pb+(255-pb)*mix-pb*dark),Math.round(t*(n-1))===Math.round((n-1)/2)];});
+    let note='';
+    if(s===0)note='Saturation is 0%, so hue no longer matters: you are on the grey axis. Try moving the hue slider and nothing changes.';
+    else if(b<15)note='At very low brightness every hue collapses toward black. Even pure red at 10% brightness is just a dark reddish-grey.';
+    else if(s===100&&b===100)note='Full saturation, full brightness: the purest version of this hue a screen can show.';
+    else if(s<35&&b>80)note='Low saturation plus high brightness is a tint: the hue with white added. Most "pastels" live here.';
+    else if(s>70&&b<50)note='High saturation plus low brightness is a shade: the hue with black added. Rich, jewel-like darks live here.';
+    else note='Mid-range saturation and brightness is a tone: the hue with grey added. Most natural materials sit in this region.';
+    $('hsbNote').textContent=note;
+  }
+  [hH,hS,hB].forEach(i=>i.addEventListener('input',renderHsb));
+  document.querySelectorAll('[data-hsb]').forEach(b=>b.addEventListener('click',()=>{const [h,s,v]=b.dataset.hsb.split(',');hH.value=h;hS.value=s;hB.value=v;renderHsb();}));
+  renderHsb();
+
+  /* ---------- Harmony ---------- */
+  const schemes={comp:{off:[0,180],t:'Two hues 180° apart. Maximum contrast; let one dominate and use the other sparingly.'},
+    split:{off:[0,150,210],t:'A hue plus the two neighbours of its complement. Strong contrast with less tension than a pure complement.'},
+    analog:{off:[-30,0,30],t:'Three neighbouring hues. Low contrast, reads as calm and unified. Add a neutral for relief.'},
+    triad:{off:[0,120,240],t:'Three hues 120° apart. Vivid and balanced; usually one hue leads and two support.'},
+    tetrad:{off:[0,90,180,270],t:'Four hues at right angles, two complementary pairs. Hard to balance; works best with varied lightness.'},
+    mono:{off:[0,0,0,0],lig:[-25,-10,10,25],t:'One hue, varied in lightness and saturation. Never clashes, so most real palettes start here.'}};
+  let scheme='comp';
+  const harmHue=$('harmHue'),harmSat=$('harmSat'),harmLig=$('harmLig'),wheel=$('harmWheel'),strip=$('harmStrip');
+  function renderHarm(){
+    const h=+harmHue.value,s=+harmSat.value,l=+harmLig.value,sc=schemes[scheme];
+    $('harmHueo').value=h+'°';$('harmSato').value=s+'%';$('harmLigo').value=l+'%';
+    wheel.querySelectorAll('.dot').forEach(d=>d.remove());strip.innerHTML='';
+    sc.off.forEach((o,i)=>{
+      const hh=((h+o)%360+360)%360,ll=clamp(l+(sc.lig?sc.lig[i]:0),8,92);
+      const [r,g,b]=hslToRgb(hh,s,ll),hx=hex(r,g,b);
+      const d=document.createElement('div');d.className='dot';const rad=(hh-90)*Math.PI/180,R=42;
+      d.style.left=(50+R*Math.cos(rad))+'%';d.style.top=(50+R*Math.sin(rad))+'%';d.style.background=hx;
+      if(i===0)d.style.borderColor='#111';wheel.appendChild(d);
+      const c=document.createElement('div');c.style.background=hx;c.textContent=hx;strip.appendChild(c);
+    });
+    $('harmNote').textContent=sc.t;
+  }
+  [harmHue,harmSat,harmLig].forEach(i=>i.addEventListener('input',renderHarm));
+  $('harmSeg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{scheme=b.dataset.h;$('harmSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderHarm();}));
+  renderHarm();
+
+  /* ---------- Models ---------- */
+  const mH=$('mH'),mS=$('mS'),mL=$('mL');
+  function rgbToXyz(r,g,b){const f=v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)};r=f(r);g=f(g);b=f(b);return [r*.4124+g*.3576+b*.1805,r*.2126+g*.7152+b*.0722,r*.0193+g*.1192+b*.9505];}
+  function xyzToLab(x,y,z){const w=[.95047,1,1.08883];const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;const fx=f(x/w[0]),fy=f(y/w[1]),fz=f(z/w[2]);return [116*fy-16,500*(fx-fy),200*(fy-fz)];}
+  function rgbToOklab(r,g,b){const f=v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)};r=f(r);g=f(g);b=f(b);
+    const l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b),m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b),s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+    return [.2104542553*l+.7936177850*m-.0040720468*s,1.9779984951*l-2.4285922050*m+.4505937099*s,.0259040371*l+.7827717662*m-.8086757660*s];}
+  function renderModel(fromSliders){
+    let r,g,b;
+    if(fromSliders){[r,g,b]=hslToRgb(+mH.value,+mS.value,+mL.value);}else{[r,g,b]=hexToRgb($('modelHex').value)||[47,111,181];const [h,s,l]=rgbToHsl(r,g,b);mH.value=Math.round(h);mS.value=Math.round(s);mL.value=Math.round(l);}
+    const hx=hex(r,g,b);$('modelSwatch').style.background=hx;$('modelPick').value=hx;$('modelHex').value=hx;curRgb=[r,g,b];
+    $('mHo').value=mH.value+'°';$('mSo').value=mS.value+'%';$('mLo').value=mL.value+'%';
+    const k=1-Math.max(r,g,b)/255,cmy=k>=1?[0,0,0]:[(1-r/255-k)/(1-k),(1-g/255-k)/(1-k),(1-b/255-k)/(1-k)];
+    const mx=Math.max(r,g,b)/255,mn=Math.min(r,g,b)/255,v=mx,sv=mx?1-mn/mx:0;
+    const [x,y,z]=rgbToXyz(r,g,b),[L,A,B]=xyzToLab(x,y,z),[oL,oa,ob]=rgbToOklab(r,g,b),oc=Math.hypot(oa,ob),oh=((Math.atan2(ob,oa)*180/Math.PI)+360)%360;
+    const lum=y,contrastW=(1.05)/(lum+.05),contrastK=(lum+.05)/.05;
+    $('modelReadout').innerHTML=[['RGB',`${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}`],['HSB',`${mH.value}°, ${Math.round(sv*100)}%, ${Math.round(v*100)}%`],['CMYK',cmy.map(c=>Math.round(c*100)+'%').join(' ')+' '+Math.round(k*100)+'%'],['XYZ',[x,y,z].map(n=>(n*100).toFixed(1)).join(', ')],['LAB',`${L.toFixed(1)}, ${A.toFixed(1)}, ${B.toFixed(1)}`],['OKLCH',`${oL.toFixed(3)} ${oc.toFixed(3)} ${oh.toFixed(0)}°`],['Lum (Y)',lum.toFixed(3)],['Contrast',`${contrastW.toFixed(1)}:1 on white · ${contrastK.toFixed(1)}:1 on black`]].map(([k2,v2])=>`<b>${k2}</b><span>${v2}</span>`).join('');
+  }
+  /* ---------- 3D color solids ---------- */
+  const cv=$('solid'),ctx=cv.getContext('2d');
+  let solid='cube',yaw=-.6,pitch=.45,spin=true,cut=false,drag=null,curRgb=[47,111,181];
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduce){spin=false;$('solidSpin').setAttribute('aria-pressed','false');}
+  const solidText={cube:['RGB · axes R, G, B · black at origin, white at (1,1,1)','Every sRGB color is a point in this cube. The grey axis runs along the diagonal from black to white; the six other corners are the primaries and secondaries.'],
+    cyl:['HSB · hue = angle, saturation = radius, brightness = height','The honest mathematical shape: H, S and B are independent, so the model is a cylinder. Note the whole bottom disc is black whatever the hue or saturation.'],
+    cone:['HSB · same model, radius scaled by brightness','The usual drawing. Scaling the radius by brightness collapses the useless dark disc to a single black apex, so the cone shows only distinguishable colors.'],
+    bicone:['HSL · lightness = height, both ends collapse','HSL puts the pure hues at the equator. Lightness 0 is black and lightness 1 is white, so the solid narrows to a point at both ends.']};
+  function buildPoints(){
+    const pts=[],N=solid==='cube'?9:0;
+    if(solid==='cube'){for(let i=0;i<=N;i++)for(let j=0;j<=N;j++)for(let k=0;k<=N;k++){const r=i/N,g=j/N,b=k/N;pts.push({x:r*2-1,y:g*2-1,z:b*2-1,c:hex(r*255,g*255,b*255)});}}
+    else{const H=36,S=6,V=9;for(let hi=0;hi<H;hi++)for(let si=0;si<=S;si++)for(let vi=0;vi<=V;vi++){const h=hi/H*360,s=si/S,v=vi/V;if(si===0&&hi>0)continue;let rad,yy,c;
+      if(solid==='bicone'){rad=s*(1-Math.abs(2*v-1));yy=v*2-1;c=hex(...hslToRgb(h,s*100,v*100));}
+      else{rad=solid==='cone'?s*v:s;yy=v*2-1;c=hex(...hsvToRgb(h,s*100,v*100));}
+      if(rad===0&&(hi>0||si>0))continue;const a=h*Math.PI/180;pts.push({x:rad*Math.cos(a),y:yy,z:rad*Math.sin(a),c});}}
+    return pts;
+  }
+  function edges(){
+    const E=[],circ=(y,r,n=48)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2,b=(i+1)/n*Math.PI*2;E.push([[r*Math.cos(a),y,r*Math.sin(a)],[r*Math.cos(b),y,r*Math.sin(b)]]);}};
+    if(solid==='cube'){const c=[-1,1];c.forEach(x=>c.forEach(y=>{E.push([[x,y,-1],[x,y,1]]);E.push([[x,-1,y],[x,1,y]]);E.push([[-1,x,y],[1,x,y]]);}));}
+    else if(solid==='cyl'){circ(-1,1);circ(1,1);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;E.push([[Math.cos(a),-1,Math.sin(a)],[Math.cos(a),1,Math.sin(a)]]);}}
+    else if(solid==='cone'){circ(1,1);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;E.push([[0,-1,0],[Math.cos(a),1,Math.sin(a)]]);}}
+    else{circ(0,1);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;E.push([[0,-1,0],[Math.cos(a),0,Math.sin(a)]]);E.push([[0,1,0],[Math.cos(a),0,Math.sin(a)]]);}}
+    return E;
+  }
+  let pts=buildPoints(),E=edges();
+  function markerPos(){const [r,g,b]=curRgb;if(solid==='cube')return [r/255*2-1,g/255*2-1,b/255*2-1];
+    const mx=Math.max(r,g,b)/255,mn=Math.min(r,g,b)/255,[h,,l]=rgbToHsl(r,g,b),a=h*Math.PI/180;
+    if(solid==='bicone'){const s=rgbToHsl(r,g,b)[1]/100,rad=s*(1-Math.abs(2*l/100-1));return [rad*Math.cos(a),l/100*2-1,rad*Math.sin(a)];}
+    const s=mx?1-mn/mx:0,rad=solid==='cone'?s*mx:s;return [rad*Math.cos(a),mx*2-1,rad*Math.sin(a)];}
+  function project(x,y,z){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    let X=x*cy+z*sy,Z=-x*sy+z*cy,Y=y*cp-Z*sp;Z=y*sp+Z*cp;const d=4.2,f=cv.height*1.15/(d-Z);return {sx:cv.width/2+X*f,sy:cv.height/2-Y*f,z:Z,f};}
+  function drawSolid(){
+    const w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);
+    const line=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#888';
+    ctx.strokeStyle=line;ctx.globalAlpha=.55;ctx.lineWidth=1.2;
+    E.forEach(([a,b])=>{const p=project(...a),q=project(...b);ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(q.sx,q.sy);ctx.stroke();});
+    ctx.globalAlpha=1;
+    const list=[];pts.forEach(p=>{const q=project(p.x,p.y,p.z);if(cut&&q.z>0.02)return;list.push({...q,c:p.c});});
+    list.sort((a,b)=>a.z-b.z);
+    const rad=solid==='cube'?w/110:w/150;
+    list.forEach(p=>{ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.sx,p.sy,rad*p.f/(h*1.15/4.2),0,Math.PI*2);ctx.fill();});
+    const m=project(...markerPos());ctx.beginPath();ctx.arc(m.sx,m.sy,rad*2.2,0,Math.PI*2);ctx.fillStyle=hex(...curRgb);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.stroke();ctx.lineWidth=1;ctx.strokeStyle='#000';ctx.stroke();
+    ctx.fillStyle=line;ctx.font='12px '+getComputedStyle(document.body).getPropertyValue('--mono');
+    const lab=solid==='cube'?[['R',[1.15,-1,-1]],['G',[-1,1.15,-1]],['B',[-1,-1,1.15]],['white',[1,1.12,1]],['black',[-1,-1.14,-1]]]:[[solid==='bicone'?'L = 1':'B = 1',[0,1.14,0]],[solid==='bicone'?'L = 0':'B = 0',[0,-1.16,0]],['S = 1',[1.12,solid==='cyl'?-1:(solid==='bicone'?0:1),0]]];
+    lab.forEach(([t,p])=>{const q=project(...p);ctx.fillText(t,q.sx-10,q.sy+4);});
+  }
+  function tick(){if(spin&&!drag)yaw+=.004;drawSolid();requestAnimationFrame(tick);}
+  const pos=e=>{const t=e.touches?e.touches[0]:e;return [t.clientX,t.clientY];};
+  cv.addEventListener('pointerdown',e=>{drag=pos(e);cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const [x,y]=pos(e);yaw+=(x-drag[0])*.01;pitch=clamp(pitch+(y-drag[1])*.01,-1.4,1.4);drag=[x,y];});
+  cv.addEventListener('pointerup',()=>drag=null);cv.addEventListener('pointercancel',()=>drag=null);
+  function setSolid(s){solid=s;pts=buildPoints();E=edges();$('solidSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.solid===s));$('solidCap').textContent=solidText[s][0];$('solidNote').textContent=solidText[s][1];}
+  $('solidSeg').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setSolid(b.dataset.solid)));
+  $('solidSpin').addEventListener('click',e=>{spin=!spin;e.currentTarget.setAttribute('aria-pressed',spin);});
+  $('solidCut').addEventListener('click',e=>{cut=!cut;e.currentTarget.setAttribute('aria-pressed',cut);});
+  setSolid('cube');tick();
+
+  [mH,mS,mL].forEach(i=>i.addEventListener('input',()=>renderModel(true)));
+  $('modelPick').addEventListener('input',e=>{$('modelHex').value=e.target.value;renderModel(false);});
+  $('modelHex').addEventListener('change',()=>renderModel(false));
+  $('modelRandom').addEventListener('click',()=>{$('modelHex').value=hex(Math.random()*255,Math.random()*255,Math.random()*255);renderModel(false);});
+  renderModel(false);
+
+  /* ---------- Perception ---------- */
+  $('bridgeBtn').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);$('contrastStage').classList.toggle('bridge',on);e.currentTarget.textContent=on?'Separate the squares':'Connect the two squares';});
+  $('munkerBtn').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);document.querySelectorAll('.munker-cell').forEach(c=>{c.classList.toggle('plain',on);c.style.backgroundImage=on?'none':'';});e.currentTarget.textContent=on?'Put the stripes back':'Remove the stripes';});
+
+  /* ---------- The Dress ---------- */
+  const PA=[0x7b,0x8d,0xc0],PB=[0x5f,0x4f,0x32];
+  const illum=$('illum');
+  function adapt(px,t){
+    const blue=[.78,.86,1],warm=[1,.90,.70],white=[1,1,1];
+    const w=t<0?blue.map((v,i)=>white[i]+(v-white[i])*-t):warm.map((v,i)=>white[i]+(v-white[i])*t);
+    const gain=t<0?1+.42*-t:1-.28*t;
+    return px.map((v,i)=>clamp(v/w[i]*gain,0,255));
+  }
+  function renderDress(){
+    const t=+illum.value/100,a=adapt(PA,t),b=adapt(PB,t),ha=hex(...a),hb=hex(...b);
+    $('seenA').setAttribute('fill',ha);$('seenB').setAttribute('fill',hb);$('seenHex').textContent=ha+' · '+hb;
+    $('illumo').value=t<-.15?'bluish':t>.15?'warm':'neutral';
+    let v='';
+    if(t<=-.5)v='Brain discounts blue and brightens: the stripes read as white, the lace as gold. Team white & gold.';
+    else if(t>=.5)v='Brain discounts yellow and darkens: the stripes read as blue, the lace as black. Team blue & black.';
+    else v='With no strong assumption the pixels stay ambiguous: a pale blue and a brown. Real brains rarely leave it here.';
+    $('dressVerdict').textContent=v;
+  }
+  illum.addEventListener('input',renderDress);
+  document.querySelectorAll('[data-illum]').forEach(b=>b.addEventListener('click',()=>{illum.value=b.dataset.illum;renderDress();}));
+  renderDress();
+
+  /* ---------- Poll (localStorage, per device) ---------- */
+  const KEY='dress-poll-v1';
+  const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{wg:0,bb:0}}catch(e){return {wg:0,bb:0}}};
+  const save=v=>{try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}};
+  let votes=load();
+  function renderPoll(){
+    const n=votes.wg+votes.bb;
+    const pw=n?Math.round(votes.wg/n*100):0,pb=n?100-pw:0;
+    $('barWG').style.width=pw+'%';$('barBB').style.width=pb+'%';
+    $('pctWG').value=n?pw+'%':'—';$('pctBB').value=n?pb+'%':'—';
+    $('pollNote').textContent=n?`${n} vote${n===1?'':'s'} on this device. In the first day of the 2015 poll, about 72% said white and gold.`:'Votes stay on this device. In the first day of the 2015 poll, about 72% of respondents said white and gold.';
+  }
+  $('voteWG').addEventListener('click',()=>{votes.wg++;save(votes);renderPoll();});
+  $('voteBB').addEventListener('click',()=>{votes.bb++;save(votes);renderPoll();});
+  $('voteReset').addEventListener('click',()=>{votes={wg:0,bb:0};save(votes);renderPoll();});
+  renderPoll();
+})();
+</script>
+
+</body>
+</html>
