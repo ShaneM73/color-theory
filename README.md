@@ -2,7 +2,7 @@
 
 ### 🔗 Live app: **https://shanem73.github.io/color-theory/**
 
-An interactive, single-file walkthrough of color theory in eight steps:
+A teaching module for **GEO 360 Aerial Photo Interpretation** and **GEO 551/651 Remote Sensing** at Missouri State University. It is an interactive, single-file walkthrough of color theory in eight steps:
 
 1. **Additive** color (mixing light, RGB)
 2. **Subtractive** color (mixing pigment, CMY/CMYK)
