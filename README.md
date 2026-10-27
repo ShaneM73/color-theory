@@ -1,5 +1,7 @@
 # Color Theory Lab
 
+### 🔗 Live app: **https://shanem73.github.io/color-theory/**
+
 An interactive, single-file walkthrough of color theory in eight steps:
 
 1. **Additive** color (mixing light, RGB)
@@ -11,6 +13,5 @@ An interactive, single-file walkthrough of color theory in eight steps:
 7. **Perception** (simultaneous contrast, Munker–White)
 8. **The Dress** (2015) as a case study in color constancy
 
-Live site: https://shanem73.github.io/color-theory/
-
 No build step. `index.html` is the whole app; open it locally or serve it from any static host.
+It is published with GitHub Pages from the `main` branch (root).
