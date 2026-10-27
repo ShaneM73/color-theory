@@ -15,3 +15,7 @@ An interactive, single-file walkthrough of color theory in eight steps:
 
 No build step. `index.html` is the whole app; open it locally or serve it from any static host.
 It is published with GitHub Pages from the `main` branch (root).
+
+## Contributors
+
+- **Xin (Shane) Miao** — Missouri State University ([@ShaneM73](https://github.com/ShaneM73))
