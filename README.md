@@ -21,3 +21,7 @@ It is published with GitHub Pages from the `main` branch (root).
 ## Contributors
 
 - **Prof. Xin (Shane) Miao** — main designer and contributor, Missouri State University ([@ShaneM73](https://github.com/ShaneM73))
+
+## License
+
+Code is released under the [MIT License](LICENSE).
