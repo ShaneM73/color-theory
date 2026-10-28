@@ -2,6 +2,8 @@
 
 ### 🔗 Live app: **https://shanem73.github.io/color-theory/**
 
+**Designer and main contributor:** Prof. Xin (Shane) Miao, Missouri State University ([@ShaneM73](https://github.com/ShaneM73))
+
 A teaching module for **GEO 360 Aerial Photo Interpretation** and **GEO 551/651 Remote Sensing** at Missouri State University. It is an interactive, single-file walkthrough of color theory in eight steps:
 
 1. **Additive** color (mixing light, RGB)
@@ -18,4 +20,4 @@ It is published with GitHub Pages from the `main` branch (root).
 
 ## Contributors
 
-- **Xin (Shane) Miao** — Missouri State University ([@ShaneM73](https://github.com/ShaneM73))
+- **Prof. Xin (Shane) Miao** — main designer and contributor, Missouri State University ([@ShaneM73](https://github.com/ShaneM73))
